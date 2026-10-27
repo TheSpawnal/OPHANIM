@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dawn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ophanim: the wheel that keeps the watch</title>
+<meta name="description" content="Ophanim: a local defensive security sentinel. It senses, correlates, deceives, contains, and reports. It does not attack.">
+
+<script>
+/* Set theme before first paint to avoid a flash. */
+(function () {
+  var t;
+  try { t = localStorage.getItem('ophanim-theme'); } catch (e) {}
+  if (t !== 'dusk' && t !== 'dawn') t = 'dawn';
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=Hanken+Grotesk:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ---------- Theme tokens ---------- */
+:root[data-theme="dawn"] {
+  --mist: #f4f6f8;
+  --mist-2: #eaeef2;
+  --mist-3: #dce3e9;
+  --ink: #2a323a;
+  --ink-2: #596570;
+  --ink-3: #8a94a0;
+  --line: rgba(42, 50, 58, 0.12);
+  --line-soft: rgba(42, 50, 58, 0.07);
+  --beryl: #5e9a91;
+  --beryl-2: #7fb3ab;
+  --gold: #b49a62;
+  --panel: rgba(255, 255, 255, 0.5);
+  --panel-line: rgba(42, 50, 58, 0.1);
+  --well-core: rgba(221, 227, 233, 0.9);
+  --well-edge: rgba(221, 227, 233, 0);
+  --grain: 0.04;
+}
+:root[data-theme="dusk"] {
+  --mist: #0c0f15;
+  --mist-2: #10141c;
+  --mist-3: #161b25;
+  --ink: #d6dde5;
+  --ink-2: #99a3af;
+  --ink-3: #6b7480;
+  --line: rgba(214, 221, 229, 0.12);
+  --line-soft: rgba(214, 221, 229, 0.06);
+  --beryl: #86c3b8;
+  --beryl-2: #9ad3c9;
+  --gold: #cdae72;
+  --panel: rgba(255, 255, 255, 0.03);
+  --panel-line: rgba(214, 221, 229, 0.1);
+  --well-core: rgba(32, 44, 60, 0.55);
+  --well-edge: rgba(32, 44, 60, 0);
+  --grain: 0.05;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--mist);
+  color: var(--ink);
+  font-family: "Hanken Grotesk", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-weight: 300;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  overflow-x: hidden;
+  transition: background 600ms ease, color 600ms ease;
+}
+
+/* ---------- Atmosphere ---------- */
+.sky { position: fixed; inset: 0; z-index: -3; overflow: hidden; pointer-events: none; }
+.cloud {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.55;
+  will-change: transform;
+}
+.cloud.a {
+  width: 60vw; height: 60vw; left: -12vw; top: -14vw;
+  background: radial-gradient(circle at 40% 40%, var(--beryl-2), transparent 62%);
+  opacity: 0.18; animation: drift-a 90s ease-in-out infinite alternate;
+}
+.cloud.b {
+  width: 70vw; height: 70vw; right: -18vw; top: 8vh;
+  background: radial-gradient(circle at 60% 40%, var(--gold), transparent 60%);
+  opacity: 0.1; animation: drift-b 120s ease-in-out infinite alternate;
+}
+.cloud.c {
+  width: 55vw; height: 55vw; left: 20vw; bottom: -20vw;
+  background: radial-gradient(circle at 50% 50%, var(--beryl), transparent 60%);
+  opacity: 0.12; animation: drift-c 150s ease-in-out infinite alternate;
+}
+@keyframes drift-a { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(6vw,4vh,0) scale(1.12); } }
+@keyframes drift-b { from { transform: translate3d(0,0,0) scale(1.05); } to { transform: translate3d(-5vw,5vh,0) scale(1); } }
+@keyframes drift-c { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(4vw,-5vh,0) scale(1.1); } }
+
+.grain {
+  position: fixed; inset: 0; z-index: -2; pointer-events: none;
+  opacity: var(--grain);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+}
+
+/* ---------- Theme toggle ---------- */
+.theme {
+  position: fixed; top: 0; right: 0; z-index: 20;
+  margin: calc(16px + env(safe-area-inset-top, 0px)) calc(18px + env(safe-area-inset-right, 0px)) 0 0;
+  display: inline-flex; align-items: center;
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--panel); backdrop-filter: blur(8px);
+  padding: 3px; gap: 2px;
+}
+.theme button {
+  appearance: none; border: 0; background: transparent; cursor: pointer;
+  color: var(--ink-2); font-family: inherit; font-size: 12px; font-weight: 500;
+  letter-spacing: 0.04em; padding: 5px 12px; border-radius: 999px;
+  transition: color 200ms ease, background 200ms ease;
+}
+.theme button[aria-pressed="true"] { color: var(--mist); background: var(--ink); }
+.theme button:focus-visible { outline: 2px solid var(--beryl); outline-offset: 2px; }
+
+/* ---------- Layout ---------- */
+.wrap { width: min(1120px, 92vw); margin: 0 auto; }
+.read { width: min(640px, 92vw); margin: 0 auto; }
+.band { padding: clamp(56px, 9vh, 120px) 0; }
+.rule { height: 1px; background: var(--line); border: 0; width: min(1120px, 92vw); margin: 0 auto; }
+
+/* ---------- Hero ---------- */
+.hero { min-height: 94vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 10vh 6vw 8vh; position: relative; }
+
+.emblem-shell { width: min(360px, 72vw); aspect-ratio: 1; position: relative; margin-bottom: clamp(20px, 4vh, 44px); }
+.emblem-halo {
+  position: absolute; inset: -14%;
+  background: radial-gradient(circle at 50% 50%, var(--well-core), var(--well-edge) 68%);
+  z-index: 0;
+}
+.emblem { position: relative; z-index: 1; width: 100%; height: 100%; display: block; overflow: visible; }
+/* Emblem colours via CSS so they resolve var() and track the theme. */
+.em-beryl-s { stroke: var(--beryl); fill: none; }
+.em-gold-s  { stroke: var(--gold);  fill: none; }
+.em-ink-s   { stroke: var(--ink);   fill: none; }
+.em-beryl-f { fill: var(--beryl); }
+.em-mist-f  { fill: var(--mist); }
+
+.wordmark {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 400; letter-spacing: 0.26em;
+  font-size: clamp(2.6rem, 8vw, 5.4rem); line-height: 1;
+  margin: 0; color: var(--ink); text-indent: 0.26em;
+}
+.hebrew {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  color: var(--beryl); opacity: 0.72; letter-spacing: 0.1em;
+  font-size: clamp(1.1rem, 3vw, 1.6rem); margin: 10px 0 0;
+}
+.essence {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-style: italic; font-weight: 400;
+  font-size: clamp(1.25rem, 3.4vw, 1.9rem); line-height: 1.4;
+  color: var(--ink); margin: clamp(22px, 4vh, 38px) auto 0; max-width: 24ch;
+}
+.lede {
+  font-size: clamp(0.98rem, 2.1vw, 1.08rem); color: var(--ink-2);
+  max-width: 48ch; margin: 18px auto 0;
+}
+.scroll-cue {
+  margin-top: clamp(30px, 6vh, 60px); color: var(--ink-3);
+  font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+  display: inline-flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.scroll-cue span { width: 1px; height: 36px; background: linear-gradient(var(--ink-3), transparent); }
+
+/* Intro motion (added by JS only when motion is allowed) */
+.intro .emblem-shell { opacity: 0; transform: scale(0.94); }
+.intro .wordmark, .intro .hebrew, .intro .essence, .intro .lede, .intro .scroll-cue { opacity: 0; transform: translateY(16px); }
+.intro.loaded .emblem-shell { opacity: 1; transform: scale(1); transition: opacity 1400ms ease, transform 1600ms cubic-bezier(.16,.84,.3,1); }
+.intro.loaded .wordmark { opacity: 1; transform: none; transition: opacity 1000ms ease 400ms, transform 1000ms ease 400ms; }
+.intro.loaded .hebrew { opacity: 0.72; transform: none; transition: opacity 1000ms ease 560ms, transform 1000ms ease 560ms; }
+.intro.loaded .essence { opacity: 1; transform: none; transition: opacity 1000ms ease 720ms, transform 1000ms ease 720ms; }
+.intro.loaded .lede { opacity: 1; transform: none; transition: opacity 1000ms ease 860ms, transform 1000ms ease 860ms; }
+.intro.loaded .scroll-cue { opacity: 1; transform: none; transition: opacity 1000ms ease 1000ms, transform 1000ms ease 1000ms; }
+
+/* ---------- Epigraph ---------- */
+.epigraph { text-align: center; }
+.epigraph blockquote {
+  margin: 0 auto; max-width: 22ch;
+  font-family: "Cormorant Garamond", Georgia, serif; font-weight: 300;
+  font-size: clamp(1.6rem, 4.6vw, 2.8rem); line-height: 1.32; color: var(--ink);
+}
+.epigraph cite {
+  display: block; margin-top: 22px; font-style: normal;
+  color: var(--ink-3); font-size: 0.82rem; letter-spacing: 0.06em;
+}
+
+/* ---------- Section heads ---------- */
+.head {
+  font-family: "Cormorant Garamond", Georgia, serif; font-weight: 400;
+  font-size: clamp(1.9rem, 5vw, 3rem); line-height: 1.1; color: var(--ink);
+  margin: 0 0 8px;
+}
+.standfirst { color: var(--ink-2); font-size: clamp(1rem, 2.2vw, 1.12rem); max-width: 56ch; margin: 0 0 clamp(26px, 4vh, 44px); }
+.prose p { margin: 0 0 1.1em; color: var(--ink); font-size: clamp(1rem, 2.1vw, 1.1rem); }
+.prose p:last-child { margin-bottom: 0; }
+.prose .accent { color: var(--ink); }
+
+/* ---------- Radar ---------- */
+.radar-head { text-align: center; margin-bottom: clamp(26px, 4vh, 40px); }
+.radar-head .head { margin-bottom: 10px; }
+.radar-head .standfirst { margin: 0 auto; }
+
+.radar {
+  display: grid; grid-template-columns: 300px 1fr; gap: clamp(20px, 3vw, 40px);
+  align-items: center;
+}
+.stage {
+  position: relative; width: 100%;
+  height: clamp(360px, 62vh, 600px);
+  min-width: 0;
+}
+.stage-well {
+  position: absolute; left: 50%; top: 50%; width: 92%; aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 50% 50%, var(--well-core), var(--well-edge) 66%);
+  z-index: 0; pointer-events: none;
+}
+#globe { position: absolute; inset: 0; z-index: 1; display: block; cursor: grab; touch-action: pan-y; }
+#globe.dragging { cursor: grabbing; }
+.stage-fallback {
+  position: absolute; inset: 0; z-index: 1; display: none;
+  align-items: center; justify-content: center; text-align: center;
+  color: var(--ink-3); font-size: 0.9rem; padding: 20px;
+}
+
+.console { min-width: 0; }
+.console-panel {
+  border: 1px solid var(--panel-line); background: var(--panel);
+  border-radius: 10px; padding: 18px 18px 16px; backdrop-filter: blur(8px);
+}
+.console-panel + .console-panel { margin-top: 16px; }
+.console-title {
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px;
+  letter-spacing: 0.14em; color: var(--ink-3); margin: 0 0 14px;
+}
+.legend { list-style: none; margin: 0; padding: 0; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+.legend li {
+  display: grid; grid-template-columns: 12px 1fr auto; align-items: center;
+  gap: 10px; padding: 6px 0; font-size: 12.5px; color: var(--ink);
+}
+.legend li + li { border-top: 1px solid var(--line-soft); }
+.dot { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+.legend .count { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.about {
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11.5px;
+  line-height: 1.7; color: var(--ink-2); margin: 0;
+}
+.about em { color: var(--ink-3); font-style: normal; display: block; margin-top: 10px; font-size: 11px; }
+
+/* ---------- Eight eyes ---------- */
+.eyes-grid { display: grid; grid-template-columns: repeat(2, 1fr); column-gap: clamp(28px, 4vw, 56px); row-gap: 0; }
+.eye-item { padding: 20px 0; border-top: 1px solid var(--line); min-width: 0; }
+.eye-name {
+  display: flex; align-items: center; gap: 10px; margin: 0 0 4px;
+  font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500;
+  font-size: 1.32rem; letter-spacing: 0.04em; color: var(--ink);
+}
+.eye-name svg { flex: none; color: var(--beryl); opacity: 0.85; }
+.eye-role { margin: 0; color: var(--ink-2); font-size: 0.96rem; }
+.eye-status {
+  margin-left: auto; font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line);
+  color: var(--ink-3); white-space: nowrap;
+}
+.eye-status.eye-online { color: var(--beryl); border-color: var(--beryl); }
+
+/* Command line */
+.cmd {
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.86rem;
+  color: var(--beryl); background: var(--panel); border: 1px solid var(--panel-line);
+  border-radius: 8px; padding: 12px 15px; margin: clamp(22px, 3vh, 30px) 0 0;
+  display: inline-block;
+}
+
+/* Response flow */
+.flow { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+.flow-step {
+  counter-increment: step; position: relative;
+  padding: clamp(18px, 2.6vh, 26px) 0 clamp(18px, 2.6vh, 26px) 64px;
+  border-top: 1px solid var(--line);
+}
+.flow-step:first-child { border-top: 0; }
+.flow-step::before {
+  content: counter(step, decimal-leading-zero); position: absolute; left: 0;
+  top: clamp(18px, 2.6vh, 26px);
+  font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 13px;
+  color: var(--beryl); letter-spacing: 0.08em;
+}
+.flow-name {
+  font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500;
+  font-size: 1.2rem; letter-spacing: 0.05em; color: var(--ink); margin: 0 0 4px;
+}
+.flow-text { margin: 0; color: var(--ink-2); font-size: clamp(0.98rem, 2.05vw, 1.06rem); max-width: 64ch; }
+.flow-coda {
+  margin: clamp(26px, 4vh, 40px) 0 0;
+  font-family: "Cormorant Garamond", Georgia, serif; font-style: italic;
+  font-size: clamp(1.2rem, 3vw, 1.6rem); line-height: 1.4; color: var(--ink); max-width: 56ch;
+}
+
+/* ---------- Discipline ---------- */
+.tenet { padding: clamp(22px, 3vh, 32px) 0; border-top: 1px solid var(--line); }
+.tenet:first-child { border-top: 0; }
+.tenet-motif {
+  font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-weight: 400;
+  font-size: clamp(1.5rem, 4vw, 2.1rem); color: var(--ink); margin: 0 0 8px;
+}
+.tenet-body { margin: 0; color: var(--ink-2); font-size: clamp(1rem, 2.1vw, 1.08rem); max-width: 62ch; }
+
+/* ---------- Footer ---------- */
+.foot { text-align: center; padding: clamp(54px, 8vh, 96px) 6vw calc(48px + env(safe-area-inset-bottom, 0px)); }
+.foot .seal {
+  font-family: "Cormorant Garamond", Georgia, serif; font-weight: 400;
+  font-size: clamp(1.4rem, 4vw, 2rem); color: var(--ink); margin: 0 0 14px;
+}
+.foot .meta { color: var(--ink-3); font-size: 0.82rem; letter-spacing: 0.04em; }
+.foot .meta span { display: block; margin-top: 4px; }
+.foot .contact { color: var(--ink-2); font-size: 0.96rem; margin: 0 0 18px; }
+.foot .contact a {
+  color: var(--beryl); text-decoration: none;
+  border-bottom: 1px solid var(--beryl); padding-bottom: 1px;
+  transition: color 200ms ease, border-color 200ms ease;
+}
+.foot .contact a:hover { color: var(--beryl-2); border-color: var(--beryl-2); }
+.foot .contact a:focus-visible { outline: 2px solid var(--beryl); outline-offset: 3px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 820px) {
+  .radar { grid-template-columns: 1fr; }
+  .console { order: 2; }
+  .stage { order: 1; height: clamp(320px, 56vh, 480px); }
+  .eyes-grid { grid-template-columns: 1fr; }
+  .eye-item { padding: 18px 0; }
+  .flow-step { padding-left: 50px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .cloud { animation: none !important; }
+}
+</style>
+</head>
+
+<body>
+<div class="sky" aria-hidden="true">
+  <div class="cloud a"></div>
+  <div class="cloud b"></div>
+  <div class="cloud c"></div>
+</div>
+<div class="grain" aria-hidden="true"></div>
+
+<div class="theme" role="group" aria-label="Color theme">
+  <button type="button" data-theme-set="dawn" aria-pressed="true">Dawn</button>
+  <button type="button" data-theme-set="dusk" aria-pressed="false">Dusk</button>
+</div>
+
+<main>
+  <!-- HERO -->
+  <section class="hero" id="top">
+    <div class="emblem-shell">
+      <div class="emblem-halo" aria-hidden="true"></div>
+      <svg class="emblem" viewBox="0 0 400 400" role="img" aria-label="The Ophanim emblem: a wheel within a wheel, its rims full of eyes, a single eye at the centre.">
+        <defs>
+          <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="1.1"/>
+          </filter>
+        </defs>
+        <!-- static halo ring -->
+        <circle class="em-beryl-s" cx="200" cy="200" r="182" stroke-width="0.5" opacity="0.28"/>
+        <!-- outer wheel group (eyes injected by JS) -->
+        <g id="wheel-outer" filter="url(#soft)">
+          <circle class="em-beryl-s" cx="200" cy="200" r="150" stroke-width="1.1" opacity="0.85"/>
+          <circle class="em-beryl-s" cx="200" cy="200" r="138" stroke-width="0.5" opacity="0.4"/>
+        </g>
+        <!-- inner wheel group (eyes injected by JS) -->
+        <g id="wheel-inner" filter="url(#soft)">
+          <circle class="em-gold-s" cx="200" cy="200" r="96" stroke-width="1" opacity="0.8"/>
+          <circle class="em-gold-s" cx="200" cy="200" r="108" stroke-width="0.5" opacity="0.35"/>
+        </g>
+        <!-- central eye -->
+        <g filter="url(#soft)">
+          <path class="em-ink-s" d="M152 200 Q200 164 248 200 Q200 236 152 200 Z" stroke-width="1.2" opacity="0.72"/>
+          <circle class="em-beryl-s" cx="200" cy="200" r="20" stroke-width="1.2" opacity="0.9"/>
+          <circle class="em-beryl-f" cx="200" cy="200" r="8.5" opacity="0.85"/>
+          <circle class="em-mist-f" cx="195" cy="195" r="2.4" opacity="0.9"/>
+        </g>
+      </svg>
+    </div>
+
+    <h1 class="wordmark">OPHANIM</h1>
+    <p class="hebrew" lang="he" dir="rtl">אוֹפַנִּים</p>
+    <p class="essence">The wheel, full of eyes, that keeps the watch.</p>
+    <p class="lede">A local defensive sentinel. It senses, correlates, deceives, contains, and reports. It never strikes back.</p>
+
+    <a class="scroll-cue" href="#vision" aria-label="Read on">
+      Descend
+      <span aria-hidden="true"></span>
+    </a>
+  </section>
+
+  <hr class="rule">
+
+  <!-- EPIGRAPH -->
+  <section class="band epigraph" id="vision">
+    <blockquote>Their rims were high and awesome, and the rims of all four were full of eyes all around.</blockquote>
+    <cite>Ezekiel 1:18, World English Bible</cite>
+  </section>
+
+  <hr class="rule">
+
+  <!-- WHAT IT IS -->
+  <section class="band">
+    <div class="read">
+      <h2 class="head">What Ophanim is</h2>
+      <div class="prose">
+        <p>Ophanim is a defensive security sentinel that watches over a single machine. It captures the host's live traffic, attributes every flow to the process behind it, deceives intruders with honeypots and decoys, contains threats on its own ground, and writes down everything it sees as structured, replayable evidence.</p>
+        <p>It does not attack. The line between watching and striking is held by design: offense and any counter-action belong to a separate system, Cerberus, to which Ophanim hands a clean incident packet. Everything the sentinel produces is evidence you could show to anyone.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- SENTINEL TODAY -->
+  <section class="band" id="today">
+    <div class="read">
+      <h2 class="head">The sentinel today</h2>
+      <p class="standfirst">The first eyes are open. What runs now on the workstation is SENSE and INTERFACE on the event spine: a minimal traffic and process monitor that already does the one thing most tools skip.</p>
+      <div class="prose">
+        <p>Ophanim captures the host's live traffic and keeps a flow table, dissecting every frame with each field length-guarded. It scans the process table and the open sockets, then makes the join that matters: it attributes every flow to the process and the binary behind it. The console answers which program is talking to that address, not merely that traffic exists.</p>
+        <p>On every change that counts, a new process, a new listening port, a fresh outbound connection, it writes a normalised event to an append-only log that is owner-only and greppable. The live view shows the attributed flows, the listening ports with their owners, the busiest processes, a rolling feed of events, and a footer of load, memory, and thermals.</p>
+        <p>It is built small on purpose: no network listener, no web server, standard library only, so there is little supply chain to trust. Three properties are already law in the code. Every input is treated as hostile, malformed frames counted and dropped. Privilege is dropped to the minimum the work needs. The evidence is append-only.</p>
+      </div>
+      <p class="cmd" aria-label="Command to run the monitor">sudo python -m ophanim monitor</p>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- RADAR -->
+  <section class="band" id="radar">
+    <div class="wrap">
+      <div class="radar-head">
+        <h2 class="head">The threat radar</h2>
+        <p class="standfirst">Every wheel is full of eyes. Here the earth itself is the wheel, and each point is a place where the watch has seen something move.</p>
+      </div>
+
+      <div class="radar">
+        <div class="console">
+          <div class="console-panel">
+            <p class="console-title">RECOGNISED ACTIVITY</p>
+            <ul class="legend" id="legend"></ul>
+          </div>
+          <div class="console-panel">
+            <p class="console-title">ABOUT THE WATCH</p>
+            <p class="about">
+              Ophanim observes one host and the traffic around it. When something moves against the perimeter, it records the shape of the attack and where it came from, then hands a report downstream to Cerberus. The globe shows the kinds of movement the watch is built to recognise, drawn from source to sentinel.
+              <em>Representative telemetry. This page presents the idea; it is not wired to a live feed.</em>
+            </p>
+          </div>
+        </div>
+
+        <div class="stage">
+          <div class="stage-well" aria-hidden="true"></div>
+          <canvas id="globe" aria-label="A slowly rotating globe showing recorded attacks arriving from across the world. Drag to rotate."></canvas>
+          <div class="stage-fallback" id="stage-fallback">The radar needs WebGL, which is unavailable here. The watch continues regardless.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- EIGHT EYES -->
+  <section class="band" id="eyes">
+    <div class="wrap">
+      <h2 class="head">The eight eyes</h2>
+      <p class="standfirst">The sentinel's work divides into eight subsystems on one event spine, an append-only record that every part reads from and writes to. Two eyes are open today; the rest are being forged.</p>
+      <div class="eyes-grid" id="eyes-grid"></div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- RESPONSE -->
+  <section class="band" id="response">
+    <div class="wrap">
+      <div class="radar-head">
+        <h2 class="head">When something moves</h2>
+        <p class="standfirst">A hostile act does not trip a reflex. It travels the spine, gathering judgment at each turn, until the sentinel holds a verdict worth acting on.</p>
+      </div>
+      <ol class="flow" id="flow"></ol>
+      <p class="flow-coda">And there the watch ends. Cerberus sits downstream, weapons cold, holding for that packet. Ophanim never strikes. It delivers the signed verdict, and the hunter waits for the word before it moves.</p>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- DISCIPLINE -->
+  <section class="band" id="discipline">
+    <div class="read">
+      <h2 class="head" style="margin-bottom: clamp(20px,3vh,32px);">The discipline</h2>
+
+      <div class="tenet">
+        <p class="tenet-motif">Full of eyes.</p>
+        <p class="tenet-body">Watch every surface. Telemetry arrives from the network, the process table, the filesystem, and the logs at once, and is normalised into a single stream before anything judges it.</p>
+      </div>
+      <div class="tenet">
+        <p class="tenet-motif">A wheel within a wheel.</p>
+        <p class="tenet-body">Defense is layered and nested. A small, auditable sensor core holds privilege; the heavy analysis runs apart, unprivileged, reading only the evidence the core has already written down.</p>
+      </div>
+      <div class="tenet">
+        <p class="tenet-motif">It did not turn as it went.</p>
+        <p class="tenet-body">Respond in any direction without hesitation, and treat every input as hostile until proven otherwise. Malformed frames are counted and dropped; no attacker gets to choose the path.</p>
+      </div>
+      <div class="tenet">
+        <p class="tenet-motif">The spirit was in the wheels.</p>
+        <p class="tenet-body">The local model reads text an attacker may have written: log lines, payloads, filenames. That text could try to manipulate the model itself. So the model is kept to advice only. A containment step fires from a fixed rule or your confirmation, never because the model was talked into it.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="rule">
+
+  <!-- FOOTER -->
+  <footer class="foot">
+    <p class="seal">Ophanim keeps the watch. Cerberus waits for the word.</p>
+    <p class="contact">For the protocols, operations, and services behind Ophanim and Cerberus, <a href="mailto:you@your-domain">reach SpawnAl directly</a>.</p>
+    <p class="meta">
+      A concept presentation by SpawnAl
+      <span>2026. Built to be shown, not deployed.</span>
+    </p>
+  </footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var html = document.documentElement;
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- Attack taxonomy (illustrative) ---------- */
+  var TYPES = [
+    { name: 'Port scan',       dawn: '#5e9a91', dusk: '#86c3b8', count: 18422 },
+    { name: 'Brute force',     dawn: '#b49a62', dusk: '#cdae72', count: 9310 },
+    { name: 'Exploit attempt', dawn: '#c0877c', dusk: '#d79b90', count: 2744 },
+    { name: 'C2 beacon',       dawn: '#8e86bc', dusk: '#ada4d8', count: 1180 },
+    { name: 'DDoS flood',      dawn: '#7791ae', dusk: '#93aac8', count: 640 },
+    { name: 'Malware drop',    dawn: '#7fa98a', dusk: '#9bc0a4', count: 512 }
+  ];
+
+  function typeColor(t) { return html.getAttribute('data-theme') === 'dusk' ? t.dusk : t.dawn; }
+
+  /* ---------- Legend ---------- */
+  var legendEl = document.getElementById('legend');
+  var legendDots = [];
+  var legendCounts = [];
+  TYPES.forEach(function (t) {
+    var li = document.createElement('li');
+    var dot = document.createElement('span');
+    dot.className = 'dot';
+    dot.style.background = typeColor(t);
+    dot.style.color = typeColor(t);
+    var label = document.createElement('span');
+    label.textContent = t.name;
+    var count = document.createElement('span');
+    count.className = 'count';
+    count.textContent = t.count.toLocaleString();
+    li.appendChild(dot); li.appendChild(label); li.appendChild(count);
+    legendEl.appendChild(li);
+    legendDots.push(dot);
+    legendCounts.push({ el: count, base: t.count });
+  });
+
+  /* ---------- Eight eyes content ---------- */
+  var EYES = [
+    ['SENSE', 'Packet capture, process and socket inspection, file integrity, and host health.', 'online'],
+    ['DECEIVE', 'Honeypots, tarpits, and decoy credentials: the maze that wastes an intruder\u2019s time.', 'forging'],
+    ['CORRELATE', 'Rules, anomalies, and threat hunting over the normalised event stream.', 'forging'],
+    ['ENRICH', 'Read-only reputation: address, network owner, geolocation, and indicators of compromise.', 'forging'],
+    ['TRIAGE', 'A local model scores and narrates incidents. Advisory only, never a trigger.', 'forging'],
+    ['CONTAIN', 'Freeze a process, drop a source, or isolate a container, on this host alone.', 'forging'],
+    ['REPORT', 'Incident timelines, indicator lists, and the handoff packet for Cerberus.', 'forging'],
+    ['INTERFACE', 'The live console: a minimal traffic and process view, with alerts.', 'online']
+  ];
+  var eyeGlyph = '<svg width="16" height="11" viewBox="0 0 16 11" fill="none" aria-hidden="true">'
+    + '<path d="M1 5.5 Q8 0.5 15 5.5 Q8 10.5 1 5.5 Z" stroke="currentColor" stroke-width="1"/>'
+    + '<circle cx="8" cy="5.5" r="2" fill="currentColor"/></svg>';
+  var eyesGrid = document.getElementById('eyes-grid');
+  EYES.forEach(function (e) {
+    var item = document.createElement('div');
+    item.className = 'eye-item';
+    var status = '<span class="eye-status eye-' + e[2] + '">' + e[2] + '</span>';
+    item.innerHTML = '<p class="eye-name">' + eyeGlyph + '<span>' + e[0] + '</span>' + status + '</p>'
+      + '<p class="eye-role">' + e[1] + '</p>';
+    eyesGrid.appendChild(item);
+  });
+
+  /* ---------- Attack response flow ---------- */
+  var FLOW = [
+    ['SENSE', 'The anomaly is marked: a port-scan burst, a beacon\u2019s steady cadence, a new listener on a sensitive port, an impossible process parentage, a spike of failed logins, a watched file changed. It becomes one event on the append-only spine.'],
+    ['CORRELATE', 'The stream is read and the event is judged more than noise. Rules and anomaly detection raise it to an alert, and related events are stitched into a single attacker session.'],
+    ['ENRICH', 'Read-only context is added: who owns the address, where it sits, whether it matches a known indicator. Not one packet is sent back to the source.'],
+    ['DECEIVE', 'Often this is already running. Honeypots and tarpits hold the intruder in a maze of decoys, spending their time and exposing their intent while the real host stays untouched.'],
+    ['TRIAGE', 'The local model reads the whole incident, narrates it in plain language, scores its severity, and proposes a playbook. Its verdict is advice, never a command.'],
+    ['CONTAIN', 'Action lands on this host alone, and only on a fixed rule or your word: freeze the process, drop the source at the firewall, isolate the container. Dry-run first by default.'],
+    ['REPORT', 'The incident is signed into one artifact: timeline, indicators, affected assets, recommended actions. The handoff packet is sealed and sent.']
+  ];
+  var flowEl = document.getElementById('flow');
+  if (flowEl) {
+    FLOW.forEach(function (f) {
+      var li = document.createElement('li');
+      li.className = 'flow-step';
+      li.innerHTML = '<p class="flow-name">' + f[0] + '</p><p class="flow-text">' + f[1] + '</p>';
+      flowEl.appendChild(li);
+    });
+  }
+
+  /* ---------- Emblem eyes ---------- */
+  function makeSvgEye(cx, cy, angleDeg, rx, ry, tone) {
+    var ns = 'http://www.w3.org/2000/svg';
+    var g = document.createElementNS(ns, 'g');
+    g.setAttribute('transform', 'translate(' + cx + ' ' + cy + ') rotate(' + (angleDeg + 90) + ')');
+    var lens = document.createElementNS(ns, 'ellipse');
+    lens.setAttribute('rx', rx); lens.setAttribute('ry', ry);
+    lens.setAttribute('class', 'em-' + tone + '-s');
+    lens.setAttribute('stroke-width', '0.8'); lens.setAttribute('opacity', '0.75');
+    var pupil = document.createElementNS(ns, 'circle');
+    pupil.setAttribute('r', Math.max(1.1, ry * 0.42));
+    pupil.setAttribute('class', 'em-' + tone + '-f'); pupil.setAttribute('opacity', '0.7');
+    g.appendChild(lens); g.appendChild(pupil);
+    return g;
+  }
+  function ringEyes(groupId, radius, count, rx, ry, tone) {
+    var g = document.getElementById(groupId);
+    if (!g) return;
+    for (var i = 0; i < count; i++) {
+      var a = (i / count) * 360;
+      var rad = a * Math.PI / 180;
+      var cx = 200 + radius * Math.cos(rad);
+      var cy = 200 + radius * Math.sin(rad);
+      g.appendChild(makeSvgEye(cx, cy, a, rx, ry, tone));
+    }
+  }
+  ringEyes('wheel-outer', 150, 18, 7.5, 3.6, 'beryl');
+  ringEyes('wheel-inner', 96, 12, 5.8, 2.8, 'gold');
+
+  var wheelOuter = document.getElementById('wheel-outer');
+  var wheelInner = document.getElementById('wheel-inner');
+
+  /* ---------- Theme switching ---------- */
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('[data-theme-set]'));
+  var globeThemeHook = null;
+  function applyTheme(name) {
+    html.setAttribute('data-theme', name);
+    try { localStorage.setItem('ophanim-theme', name); } catch (e) {}
+    buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-theme-set') === name)); });
+    legendDots.forEach(function (d, i) { d.style.background = typeColor(TYPES[i]); d.style.color = typeColor(TYPES[i]); });
+    if (globeThemeHook) globeThemeHook(name);
+  }
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () { applyTheme(b.getAttribute('data-theme-set')); });
+  });
+  applyTheme(html.getAttribute('data-theme') || 'dawn');
+
+  /* ---------- Hero intro ---------- */
+  if (!reduceMotion) {
+    var hero = document.getElementById('top');
+    hero.classList.add('intro');
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { hero.classList.add('loaded'); });
+    });
+  }
+
+  /* ---------- Soft round sprite texture ---------- */
+  function softCircleTexture() {
+    var c = document.createElement('canvas');
+    c.width = c.height = 64;
+    var ctx = c.getContext('2d');
+    var g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,255,255,1)');
+    g.addColorStop(0.35, 'rgba(255,255,255,0.85)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 64, 64);
+    var tex = new THREE.Texture(c);
+    tex.needsUpdate = true;
+    return tex;
+  }
+
+  function ringTexture() {
+    var c = document.createElement('canvas');
+    c.width = c.height = 64;
+    var ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, 64, 64);
+    ctx.strokeStyle = 'rgba(255,255,255,1)';
+    ctx.lineWidth = 5;
+    ctx.shadowColor = 'rgba(255,255,255,0.9)';
+    ctx.shadowBlur = 5;
+    ctx.beginPath();
+    ctx.arc(32, 32, 24, 0, Math.PI * 2);
+    ctx.stroke();
+    var tex = new THREE.Texture(c);
+    tex.needsUpdate = true;
+    return tex;
+  }
+
+  /* ---------- Globe ---------- */
+  var canvas = document.getElementById('globe');
+  var stage = canvas.parentElement;
+  var fallback = document.getElementById('stage-fallback');
+
+  var hasWebGL = (function () {
+    try {
+      return !!window.THREE && !!document.createElement('canvas').getContext('webgl');
+    } catch (e) { return false; }
+  })();
+
+  if (!hasWebGL) {
+    canvas.style.display = 'none';
+    fallback.style.display = 'flex';
+    return;
+  }
+
+  var DEG = Math.PI / 180;
+  var R = 100;
+  var SEG = 48;
+  var NSLOTS = 16;
+
+  var THEME = {
+    dawn: {
+      ocean: new THREE.Color('#7f8c98'), oceanOp: 0.22,
+      land: new THREE.Color('#5e8c84'), landOp: 0.6,
+      arcOp: 0.42, signalOp: 0.95, nodeOp: 0.75,
+      blending: THREE.NormalBlending
+    },
+    dusk: {
+      ocean: new THREE.Color('#9aa8b6'), oceanOp: 0.2,
+      land: new THREE.Color('#8ac5ba'), landOp: 0.52,
+      arcOp: 0.6, signalOp: 1.0, nodeOp: 0.85,
+      blending: THREE.AdditiveBlending
+    }
+  };
+  function pal() { return THEME[html.getAttribute('data-theme') === 'dusk' ? 'dusk' : 'dawn']; }
+
+  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setClearColor(0x000000, 0);
+
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(42, 1, 1, 2000);
+  camera.position.set(0, 0, 300);
+
+  var globe = new THREE.Group();
+  globe.rotation.x = 0.33;
+  scene.add(globe);
+
+  var sprite = softCircleTexture();
+
+  // Invisible depth occluder so only the near hemisphere is visible.
+  var occluder = new THREE.Mesh(
+    new THREE.SphereGeometry(R * 0.986, 48, 48),
+    new THREE.MeshBasicMaterial({ colorWrite: false })
+  );
+  globe.add(occluder);
+
+  function latLngToVec(lat, lng, radius) {
+    var phi = (90 - lat) * DEG;
+    var theta = (lng + 180) * DEG;
+    return new THREE.Vector3(
+      -(radius * Math.sin(phi) * Math.cos(theta)),
+      radius * Math.cos(phi),
+      radius * Math.sin(phi) * Math.sin(theta)
+    );
+  }
+
+  // Ocean dot field (fibonacci sphere).
+  function buildField(n) {
+    var pos = new Float32Array(n * 3);
+    var off = 2 / n, inc = Math.PI * (3 - Math.sqrt(5));
+    for (var i = 0; i < n; i++) {
+      var y = i * off - 1 + off / 2;
+      var r = Math.sqrt(1 - y * y);
+      var a = i * inc;
+      pos[i * 3] = Math.cos(a) * r * R;
+      pos[i * 3 + 1] = y * R;
+      pos[i * 3 + 2] = Math.sin(a) * r * R;
+    }
+    var g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    return g;
+  }
+  var p0 = pal();
+  var oceanMat = new THREE.PointsMaterial({
+    size: 0.9, map: sprite, transparent: true, depthWrite: false,
+    color: p0.ocean.clone(), opacity: p0.oceanOp, sizeAttenuation: true
+  });
+  var oceanPoints = new THREE.Points(buildField(1500), oceanMat);
+  globe.add(oceanPoints);
+
+  var landMat = new THREE.PointsMaterial({
+    size: 1.15, map: sprite, transparent: true, depthWrite: false,
+    color: p0.land.clone(), opacity: p0.landOp, sizeAttenuation: true
+  });
+  var landPoints = null;
+
+  function buildLand(coords) {
+    // coords: array of arcs, each arc an array of [lng,lat]
+    var verts = [];
+    for (var a = 0; a < coords.length; a++) {
+      var arc = coords[a];
+      for (var i = 0; i < arc.length - 1; i++) {
+        var lng1 = arc[i][0], lat1 = arc[i][1];
+        var lng2 = arc[i + 1][0], lat2 = arc[i + 1][1];
+        var dLng = lng2 - lng1, dLat = lat2 - lat1;
+        var span = Math.sqrt(dLng * dLng + dLat * dLat);
+        var steps = Math.max(1, Math.round(span / 1.4));
+        for (var s = 0; s < steps; s++) {
+          var f = s / steps;
+          var v = latLngToVec(lat1 + dLat * f, lng1 + dLng * f, R * 1.004);
+          verts.push(v.x, v.y, v.z);
+        }
+      }
+    }
+    var pos = new Float32Array(verts);
+    var g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    landPoints = new THREE.Points(g, landMat);
+    globe.add(landPoints);
+  }
+
+  // Minimal TopoJSON arc decoder (coastlines + borders).
+  function decodeArcs(topo) {
+    var tr = topo.transform;
+    var sx = tr.scale[0], sy = tr.scale[1], tx = tr.translate[0], ty = tr.translate[1];
+    return topo.arcs.map(function (arc) {
+      var x = 0, y = 0, pts = [];
+      for (var i = 0; i < arc.length; i++) {
+        x += arc[i][0]; y += arc[i][1];
+        pts.push([x * sx + tx, y * sy + ty]);
+      }
+      return pts;
+    });
+  }
+
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+    .then(function (r) { return r.json(); })
+    .then(function (topo) { buildLand(decodeArcs(topo)); })
+    .catch(function () {
+      // Fallback: denser, brighter field stands in for the dotted earth.
+      oceanMat.opacity = Math.min(0.4, pal().oceanOp + 0.14);
+      oceanPoints.geometry.dispose();
+      oceanPoints.geometry = buildField(2600);
+    });
+
+  // Attack slots (pooled).
+  var slots = [];
+  function makeSprite(op) {
+    var m = new THREE.SpriteMaterial({ map: sprite, transparent: true, depthWrite: false, opacity: op, color: 0xffffff });
+    var s = new THREE.Sprite(m);
+    s.visible = false;
+    globe.add(s);
+    return s;
+  }
+  for (var k = 0; k < NSLOTS; k++) {
+    var arcPos = new Float32Array((SEG + 1) * 3);
+    var ag = new THREE.BufferGeometry();
+    ag.setAttribute('position', new THREE.BufferAttribute(arcPos, 3));
+    var am = new THREE.LineBasicMaterial({ transparent: true, opacity: 0, color: 0xffffff });
+    var line = new THREE.Line(ag, am);
+    line.visible = false;
+    globe.add(line);
+    slots.push({
+      active: false, line: line, lineMat: am, arcPos: arcPos,
+      signal: makeSprite(0), src: makeSprite(0), dst: makeSprite(0),
+      p0: new THREE.Vector3(), ctrl: new THREE.Vector3(), p2: new THREE.Vector3(),
+      t: 0, dur: 1, type: TYPES[0]
+    });
+  }
+
+  // Paris beacon: a persistent pink marker with an expanding ping.
+  var PINK = new THREE.Color('#ff4fa3');
+  var ringTex = ringTexture();
+  var parisPos = latLngToVec(48.8566, 2.3522, R * 1.01);
+  var addInit = (html.getAttribute('data-theme') === 'dusk');
+  var parisMat = new THREE.SpriteMaterial({
+    map: sprite, transparent: true, depthWrite: false,
+    color: PINK.clone(), opacity: 1,
+    blending: addInit ? THREE.AdditiveBlending : THREE.NormalBlending
+  });
+  var parisMarker = new THREE.Sprite(parisMat);
+  parisMarker.position.copy(parisPos);
+  parisMarker.scale.setScalar(4);
+  globe.add(parisMarker);
+
+  var pingMat = new THREE.SpriteMaterial({
+    map: ringTex, transparent: true, depthWrite: false,
+    color: PINK.clone(), opacity: 0,
+    blending: addInit ? THREE.AdditiveBlending : THREE.NormalBlending
+  });
+  var parisPing = new THREE.Sprite(pingMat);
+  parisPing.position.copy(parisPos);
+  parisPing.scale.setScalar(4);
+  globe.add(parisPing);
+  var pingT = 0;
+
+  function randLat() {
+    // Bias toward inhabited latitudes.
+    var r = (Math.random() + Math.random() + Math.random()) / 3;
+    return (r * 2 - 1) * 62 + 8;
+  }
+  function randLng() { return Math.random() * 360 - 180; }
+
+  function quad(a, c, b, t, out) {
+    var u = 1 - t;
+    var w0 = u * u, w1 = 2 * u * t, w2 = t * t;
+    out.x = w0 * a.x + w1 * c.x + w2 * b.x;
+    out.y = w0 * a.y + w1 * c.y + w2 * b.y;
+    out.z = w0 * a.z + w1 * c.z + w2 * b.z;
+    return out;
+  }
+
+  var tmp = new THREE.Vector3();
+  function spawn(slot) {
+    var type = TYPES[(Math.random() * TYPES.length) | 0];
+    slot.type = type;
+    slot.p0.copy(latLngToVec(randLat(), randLng(), R));
+    slot.p2.copy(latLngToVec(randLat(), randLng(), R));
+    var ang = slot.p0.angleTo(slot.p2);
+    slot.ctrl.copy(slot.p0).add(slot.p2).normalize().multiplyScalar(R * (1.12 + 0.55 * (ang / Math.PI)));
+
+    var pos = slot.arcPos;
+    for (var i = 0; i <= SEG; i++) {
+      quad(slot.p0, slot.ctrl, slot.p2, i / SEG, tmp);
+      pos[i * 3] = tmp.x; pos[i * 3 + 1] = tmp.y; pos[i * 3 + 2] = tmp.z;
+    }
+    slot.line.geometry.attributes.position.needsUpdate = true;
+
+    var col = new THREE.Color(typeColor(type));
+    slot.lineMat.color.copy(col);
+    slot.signal.material.color.copy(col);
+    slot.src.material.color.copy(col);
+    slot.dst.material.color.copy(col);
+
+    slot.src.position.copy(slot.p0); slot.src.scale.setScalar(3.4);
+    slot.dst.position.copy(slot.p2); slot.dst.scale.setScalar(0.1);
+    slot.signal.position.copy(slot.p0); slot.signal.scale.setScalar(4.2);
+
+    slot.t = 0;
+    slot.dur = 2.0 + Math.random() * 1.4;
+    slot.active = true;
+    slot.line.visible = slot.signal.visible = slot.src.visible = slot.dst.visible = true;
+  }
+
+  function updateSlot(slot, dt, p) {
+    if (!slot.active) return;
+    if (!reduceMotion) slot.t += dt / slot.dur;
+    var t = slot.t;
+    // arc opacity: fade in, hold, fade out
+    var o;
+    if (t < 0.18) o = (t / 0.18);
+    else if (t > 0.8) o = Math.max(0, (1 - t) / 0.2);
+    else o = 1;
+    slot.lineMat.opacity = o * p.arcOp;
+    slot.lineMat.blending = p.blending;
+
+    if (t >= 1) {
+      slot.active = false;
+      slot.line.visible = slot.signal.visible = slot.src.visible = slot.dst.visible = false;
+      return;
+    }
+    quad(slot.p0, slot.ctrl, slot.p2, Math.min(t / 0.86, 1), tmp);
+    slot.signal.position.copy(tmp);
+    slot.signal.material.opacity = o * p.signalOp;
+    slot.signal.material.blending = p.blending;
+
+    slot.src.material.opacity = Math.max(0, (1 - t)) * p.nodeOp;
+    slot.src.material.blending = p.blending;
+
+    // destination node blooms as the signal lands
+    var arrive = Math.max(0, (t - 0.72) / 0.28);
+    slot.dst.scale.setScalar(0.1 + arrive * 4.6);
+    slot.dst.material.opacity = arrive * p.nodeOp;
+    slot.dst.material.blending = p.blending;
+  }
+
+  globeThemeHook = function () {
+    var p = pal();
+    oceanMat.color.copy(p.ocean); oceanMat.opacity = p.oceanOp;
+    landMat.color.copy(p.land); landMat.opacity = p.landOp;
+    var add = (html.getAttribute('data-theme') === 'dusk') ? THREE.AdditiveBlending : THREE.NormalBlending;
+    parisMat.blending = add; parisMat.needsUpdate = true;
+    pingMat.blending = add; pingMat.needsUpdate = true;
+  };
+
+  // Interaction: drag to rotate, with inertia and slow auto-spin.
+  var dragging = false, lastX = 0, lastY = 0, velY = 0, velX = 0;
+  canvas.addEventListener('pointerdown', function (e) {
+    dragging = true; canvas.classList.add('dragging');
+    lastX = e.clientX; lastY = e.clientY;
+    canvas.setPointerCapture && canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    var dx = e.clientX - lastX, dy = e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    velY = dx * 0.005;
+    globe.rotation.y += velY;
+    if (e.pointerType === 'mouse') {
+      velX = dy * 0.005;
+      globe.rotation.x = Math.max(-1.2, Math.min(1.2, globe.rotation.x + velX));
+    }
+  });
+  function endDrag() { dragging = false; canvas.classList.remove('dragging'); }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  canvas.addEventListener('pointerleave', function () { if (dragging) endDrag(); });
+
+  // Sizing.
+  function resize() {
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+  else window.addEventListener('resize', resize);
+  resize();
+
+  // Visibility gating.
+  var inView = true, pageHidden = false;
+  if (window.IntersectionObserver) {
+    new IntersectionObserver(function (ents) { inView = ents[0].isIntersecting; }, { threshold: 0.02 })
+      .observe(stage);
+  }
+  document.addEventListener('visibilitychange', function () { pageHidden = document.hidden; });
+
+  // Spawn cadence.
+  var spawnAcc = 0, spawnEvery = 0.85;
+  if (reduceMotion) {
+    // Lay out a few static arcs and leave them.
+    for (var q = 0; q < 6; q++) { spawn(slots[q]); slots[q].t = 0.45; }
+  }
+
+  // Cosmetic legend drift (clearly representative).
+  var legendAcc = 0;
+
+  var last = performance.now();
+  function tick(now) {
+    requestAnimationFrame(tick);
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+
+    // Emblem rotation (wheel within a wheel).
+    if (!reduceMotion) {
+      var ea = now * 0.004, eb = -now * 0.0028;
+      if (wheelOuter) wheelOuter.setAttribute('transform', 'rotate(' + (ea % 360) + ' 200 200)');
+      if (wheelInner) wheelInner.setAttribute('transform', 'rotate(' + (eb % 360) + ' 200 200)');
+    }
+
+    if (pageHidden || !inView) return;
+
+    var p = pal();
+    if (!reduceMotion) {
+      if (!dragging) {
+        globe.rotation.y += 0.0010 + velY;
+        velY *= 0.95;
+        if (Math.abs(velY) < 0.0002) velY = 0;
+      }
+      spawnAcc += dt;
+      if (spawnAcc >= spawnEvery) {
+        spawnAcc = 0;
+        for (var i = 0; i < slots.length; i++) {
+          if (!slots[i].active) { spawn(slots[i]); break; }
+        }
+      }
+      legendAcc += dt;
+      if (legendAcc > 2.2) {
+        legendAcc = 0;
+        var idx = (Math.random() * legendCounts.length) | 0;
+        legendCounts[idx].base += (Math.random() * 7) | 0;
+        legendCounts[idx].el.textContent = legendCounts[idx].base.toLocaleString();
+      }
+    }
+
+    for (var j = 0; j < slots.length; j++) updateSlot(slots[j], dt, p);
+
+    // Paris beacon: gentle pulse and a radar ping.
+    if (!reduceMotion) {
+      parisMarker.scale.setScalar(4 * (1 + 0.22 * Math.sin(now * 0.005)));
+      parisMat.opacity = 0.8 + 0.2 * (0.5 + 0.5 * Math.sin(now * 0.005));
+      pingT += dt / 1.8;
+      if (pingT > 1) pingT -= 1;
+      parisPing.scale.setScalar((1 + pingT * 5) * 4);
+      pingMat.opacity = (1 - pingT) * (p === THEME.dusk ? 0.9 : 0.7);
+    } else {
+      parisMarker.scale.setScalar(4);
+      parisMat.opacity = 0.95;
+      pingMat.opacity = 0;
+    }
+
+    renderer.render(scene, camera);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
